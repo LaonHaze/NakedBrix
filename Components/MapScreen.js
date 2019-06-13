@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Image } from 'react-native';
 import MapView, {Marker, Polyline, PROVIDER_GOOGLE, AnimatedRegion, ProviderPropType } from 'react-native-maps';
 import haversine from 'haversine';
 
@@ -26,17 +26,15 @@ export default class MapScreen extends React.Component {
           },
           markers: []
           ,
-          selectedmarker: null,
           error: null
         };
     }
 
     componentDidMount() {
-        this.setState({markers: this.props.markerLocations});
+        this.setState({markers: this.props.markerLocations}, () => {this.updateDistance(this.state.x)});
 
         navigator.geolocation.getCurrentPosition(
             position => {
-            console.log(position);
 
             this.setState({
                 region: {
@@ -123,13 +121,18 @@ export default class MapScreen extends React.Component {
         return haversine(prev, curr) || 0;
     }
 
+    updateDistance = (curr) => {
+        let curmarkers = this.state.markers;
+        let distances = curmarkers.map(m => (haversine(m.coordinates, curr)*1000).toFixed(2));
+        this.props.setDistances(distances);
+    }
     
     checkDistance = (curr) => {
         let curmarkers = this.state.markers;
         for(let i = 0; i < curmarkers.length; i++) {
             let distance = haversine(curmarkers[i].coordinates, curr);
             if(distance < 0.02){
-                this.props.setProximityMarker(curmarkers[i].title);
+                this.props.setProximityMarker(i, curmarkers[i].title);
                 break;
             }
         };
@@ -137,9 +140,9 @@ export default class MapScreen extends React.Component {
 
     testMarkerMove = (e) => {
         this.setState({x: e.nativeEvent.coordinate});
+        this.updateDistance(e.nativeEvent.coordinate);
         this.checkDistance(e.nativeEvent.coordinate);
     }
-
 
     render() {
         return(
@@ -149,22 +152,30 @@ export default class MapScreen extends React.Component {
                     provider = {PROVIDER_GOOGLE}
                     mapType = {'satellite'}
                     style = {{ ...StyleSheet.absoluteFillObject}}
-                    onPress = {() => {this.setState({selectedmarker: null})}}
+                    showsUserLocation = {true}
                 >
                     {
-                        this.state.markers.map((marker) => (
-                            <Marker 
-                                key={marker.title} 
-                                title={marker.title} 
-                                coordinate={marker.coordinates} 
-                                description={(this.calcDistance(this.state.x,marker.coordinates)*1000).toFixed(2).toString(10) + "m"} 
-                                onPress={() => {this.setState({selectedmarker: marker.coordinates})}}
-                            />
+                        this.props.markerLocations.map((marker, index) => (
+                                <Marker 
+                                    key={marker.title}
+                                    coordinate={marker.coordinates} 
+                                >
+                                    {this.props.brixVals[index] == null ?
+                                        <View>
+                                            <Image source = {require('../assets/baseMarker.png')} style = {{height: 70}} resizeMode = 'contain'/>
+                                            <Text style={{color: 'white', backgroundColor: 'black', position:'absolute',paddingLeft:6,paddingTop:5.5, height: 24, width: 24, borderRadius: 12, fontSize: 8, top:18, left: 46.5}}>{marker.title}</Text>
+                                        </View>
+                                        :
+                                        <View>
+                                            <Image source = {require('../assets/tickMarker.png')} style = {{height: 48}} resizeMode = 'contain'/>
+                                        </View>
+                                    }
+                                </Marker>
                         ))
                     }
-                    <Marker draggable coordinate={this.state.x} onDragEnd={(e) => this.testMarkerMove(e)} title={'Mock Location'}/>
+                    <Marker draggable coordinate={this.state.x} onDragEnd={(e) => this.testMarkerMove(e)} title={'Mock Location'} pinColor='blue'/>
                     {
-                        this.state.selectedmarker == null ? null : <Polyline coordinates={[this.state.x,this.state.selectedmarker]} strokeWidth = {3}/>
+                        this.props.selectedM == null ? null : <Polyline coordinates={[this.state.x,this.props.selectedM.coordinates]} strokeWidth = {3}/>
                     }
                     {
                         this.state.currentLoc == null ? null : <Marker.Animated ref={marker => {this.marker = marker;}} title={"true location"} coordinate={this.state.currentLoc} description={this.state.currentLoc.longitude.toString() + " " + this.state.currentLoc.latitude.toString()}/>
@@ -187,3 +198,5 @@ const styles = StyleSheet.create({
       justifyContent: 'center',
     },
   });
+
+//description={(this.calcDistance(this.state.x,marker.coordinates)*1000).toFixed(2).toString(10) + "m"}
