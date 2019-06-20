@@ -11,7 +11,7 @@ export default class DistanceTracker extends React.Component {
             expanded: false,
             animation: new Animated.Value(),
             maxHeight: 300,
-            minHeight: 45
+            minHeight: 40,
         }
     }
 
@@ -36,25 +36,68 @@ export default class DistanceTracker extends React.Component {
         this.state.animation.setValue(this.state.minHeight);
     }
 
+    viewSwitch(block) {
+        this.props.setBlock(block);
+    }
+
+    shortestDistance(block) {
+        let shortestDistance = null;
+        for(i = 0 ; i < this.props.markers.length; i++) {
+            if(this.props.markers[i].block == block && shortestDistance == null) {
+                shortestDistance = this.props.distances[i];
+            }
+            else if(this.props.markers[i].block == block && this.props.distances[i] < shortestDistance) {
+                shortestDistance = this.props.distances[i];
+            }
+        }
+
+        if (shortestDistance == null) {
+            shortestDistance = "unknown";
+        }
+
+        return shortestDistance
+    }
+
+    blockBrixCheck(block) {
+        let blockDone = true;
+
+        for(i = 0 ; i < this.props.markers.length; i++) {
+            if(this.props.markers[i].block == block && this.props.brixVals[i] == null) {
+                blockDone = false;
+            }
+        }
+
+        return blockDone;
+    }
+
     render() {
         return(
             <Animated.View style = {[styles.container,{height: this.state.animation}]}>
                 {this.state.expanded?
                     <View style = {{flexDirection:'row'}}>
-                        <Text style = {{color: 'black'}}>
-                            Show Distance to All Locations
-                        </Text>
+                        {this.props.distanceView == 'block'?
+                            <Text style = {styles.invisibleTitle}>
+                                Show Distance to All Locations
+                            </Text>
+                            :
+                            <Button
+                                buttonStyle= {styles.distanceButton}
+                                title = "View All Blocks"
+                                onPress={() => {this.props.unsetBlock()}}
+                            />
+                        }
+                        
                         <Button
                             icon = {<Icon 
                                 name='chevron-down' 
                                 color='black'
                             />}
-                            buttonStyle= {{backgroundColor: 'red', minWidth: '25%', marginTop: 5, marginBottom: 5}}
+                            buttonStyle= {styles.distanceButton}
                             onPress={() => {this.toggle()}}
                         />
                     </View>:
                     <View style = {{flexDirection:'row'}}>
-                        <Text style = {{color: 'white', paddingTop: 10, marginRight: 5}}>
+                        <Text style = {styles.visibleTitle}>
                             Show Distance to All Locations
                         </Text>
                         <Button
@@ -62,33 +105,65 @@ export default class DistanceTracker extends React.Component {
                                         name='chevron-up' 
                                         color='black'
                                     />}
-                            buttonStyle= {{backgroundColor: 'red', minWidth: '25%', marginTop: 5, marginBottom: 5}}
+                            buttonStyle= {styles.distanceButton}
                             onPress={() => {this.toggle()}}
                         />
                     </View>
                 }
                 <ScrollView>
                 {
-                    this.props.markers.map((marker, index) => (
-                        <View key = {index} style = {{marginTop: 15,marginBottom: 5}}>
-                            <Text key = {marker.id} style = {{color: 'white', marginBottom: 5}}>Distance To Location: {this.props.distances[index]} Meters</Text>
-                            
-                            {this.props.brixVals[index] == null ? 
-                                <Button 
-                                    key = {marker.title} 
-                                    color='white'
-                                    buttonStyle= {{backgroundColor: 'red'}}
-                                    title = {marker.title}
-                                    onPress = {() => {this.props.setMarker({marker})}}
-                                /> : 
-                                <Button 
-                                    key = {marker.title} 
+                    this.props.distanceView == 'block'?
+                    this.props.blocks.map((block, index) => (
+                        <View key = {index} style = {styles.mainWindow}>
+                            <Text style = {{color: 'white', marginBottom: 5}}>Distance To Location: {this.shortestDistance(block)} Meters</Text>
+                            {
+                                this.blockBrixCheck(block)?
+                                <Button
                                     color='white'
                                     buttonStyle= {{backgroundColor: 'lightgreen'}}
-                                    title = {marker.title} 
-                                    onPress = {() => {this.props.setMarker({marker})}}
-                                />}
+                                    title = {block + " Block"}
+                                    onPress = {() => {this.viewSwitch(block)}}
+                                />
+                                :
+                                <Button
+                                    color='white'
+                                    buttonStyle= {{backgroundColor: 'red'}}
+                                    title = {block + " Block"}
+                                    onPress = {() => {this.viewSwitch(block)}}
+                                />
+                            }
+                            
                         </View>
+                    ))
+                    :
+                    this.props.markers.map((marker, index) => (
+                        <View key = {index + 1000}>
+                            {
+                                marker.block == this.props.selectedBlock?
+                                    <View key = {index} style = {styles.mainWindow}>
+                                    <Text key = {marker.id} style = {{color: 'white', marginBottom: 5}}>Distance To Location: {this.props.distances[index]} Meters</Text>
+                                    
+                                    {this.props.brixVals[index] == null ? 
+                                        <Button 
+                                            key = {marker.title}
+                                            color='white'
+                                            buttonStyle= {{backgroundColor: 'red'}}
+                                            title = {marker.block + " "  + marker.title}
+                                            onPress = {() => {this.props.setMarker({marker})}}
+                                        /> : 
+                                        <Button 
+                                            key = {marker.title} 
+                                            color='white'
+                                            buttonStyle= {{backgroundColor: 'lightgreen'}}
+                                            title = {marker.block + " "  + marker.title} 
+                                            onPress = {() => {this.props.setMarker({marker})}}
+                                        />}
+                                    </View>
+                                :
+                                null
+                            }
+                        </View>
+                        
                     ))
                 }
                 </ScrollView>
@@ -104,5 +179,25 @@ const styles = StyleSheet.create({
       justifyContent: 'center',
       color:'white',
       overflow: 'hidden'
+    },
+    distanceButton: {
+        backgroundColor: 'red', 
+        minWidth: '25%', 
+        marginTop: 5, 
+        marginBottom: 5
+    },
+    visibleTitle:{
+        color: 'white', 
+        paddingTop: 10, 
+        marginRight: 5
+    },
+    invisibleTitle:{
+        color: 'black', 
+        paddingTop: 10, 
+        marginRight: 5
+    },
+    mainWindow: {
+        marginTop: 15,
+        marginBottom: 5
     }
   });

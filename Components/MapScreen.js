@@ -26,7 +26,8 @@ export default class MapScreen extends React.Component {
           },
           markers: []
           ,
-          error: null
+          error: null,
+          testView: false
         };
     }
 
@@ -131,7 +132,7 @@ export default class MapScreen extends React.Component {
         let curmarkers = this.state.markers;
         for(let i = 0; i < curmarkers.length; i++) {
             let distance = haversine(curmarkers[i].coordinates, curr);
-            if(distance < 0.02){
+            if(distance < 0.01){
                 this.props.setProximityMarker(i, curmarkers[i].title);
                 break;
             }
@@ -152,33 +153,49 @@ export default class MapScreen extends React.Component {
                     provider = {PROVIDER_GOOGLE}
                     mapType = {'satellite'}
                     style = {{ ...StyleSheet.absoluteFillObject}}
-                    showsUserLocation = {true}
+                    showsUserLocation = {!this.state.testView}
+                    onUserLocationChange = {(e) => {!this.state.testView? this.testMarkerMove(e) : null}}
+                    toolbarEnabled = {false}
                 >
                     {
                         this.props.markerLocations.map((marker, index) => (
                                 <Marker 
                                     key={marker.title}
-                                    coordinate={marker.coordinates} 
+                                    coordinate={marker.coordinates}
                                 >
                                     {this.props.brixVals[index] == null ?
-                                        <View>
+                                        <View style = {{left: 2, top: 8}}>
+                                            {
+                                                this.props.selectedM == null ? 
+                                                    null : 
+                                                    (this.props.selectedM.title == marker.title ? 
+                                                        <Text style ={styles.distanceText}>{this.props.distances[index]}m</Text> 
+                                                        : null)
+                                            }
                                             <Image source = {require('../assets/baseMarker.png')} style = {{height: 70}} resizeMode = 'contain'/>
-                                            <Text style={{color: 'white', backgroundColor: 'black', position:'absolute',paddingLeft:6,paddingTop:5.5, height: 24, width: 24, borderRadius: 12, fontSize: 8, top:18, left: 46.5}}>{marker.title}</Text>
+                                            <Text style={styles.markerText}>{marker.title}</Text>   
                                         </View>
                                         :
-                                        <View>
-                                            <Image source = {require('../assets/tickMarker.png')} style = {{height: 48}} resizeMode = 'contain'/>
+                                        <View style = {{height: 70, width: 70, left: 8}}>
+                                            {
+                                                this.props.selectedM == null ? 
+                                                    null : 
+                                                    (this.props.selectedM.title == marker.title ? 
+                                                        <Text numberOfLines={1} style ={{color:'white', backgroundColor: 'black', position: 'absolute', overflow: 'visible'}}>{this.props.distances[index]}m</Text> 
+                                                        : null)
+                                            }
+                                            <Image source = {require('../assets/tickMarker.png')} style = {{height: 48, bottom: -22}} resizeMode = 'contain'/>
                                         </View>
                                     }
                                 </Marker>
                         ))
                     }
-                    <Marker draggable coordinate={this.state.x} onDragEnd={(e) => this.testMarkerMove(e)} title={'Mock Location'} pinColor='blue'/>
+                    {
+                        this.state.testView ? <Marker draggable coordinate={this.state.x} onDragEnd={(e) => this.testMarkerMove(e)} title={'Mock Location'} pinColor='blue'/> : null
+                    }
+                    
                     {
                         this.props.selectedM == null ? null : <Polyline coordinates={[this.state.x,this.props.selectedM.coordinates]} strokeWidth = {3}/>
-                    }
-                    {
-                        this.state.currentLoc == null ? null : <Marker.Animated ref={marker => {this.marker = marker;}} title={"true location"} coordinate={this.state.currentLoc} description={this.state.currentLoc.longitude.toString() + " " + this.state.currentLoc.latitude.toString()}/>
                     }
                 </MapView>
             </View>
@@ -197,6 +214,32 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       justifyContent: 'center',
     },
+    distanceText: {
+        color:'white', 
+        backgroundColor: 'black', 
+        position:'absolute', 
+        top:-5, 
+        left: 34
+    },
+    markerText: {
+        color: 'white', 
+        backgroundColor: 'black', 
+        position:'absolute', 
+        paddingLeft:6,
+        paddingTop:5.5, 
+        height: 24, 
+        width: 24, 
+        borderRadius: 12, 
+        fontSize: 8, 
+        top:18, 
+        left: 46.5
+    }
   });
 
 //description={(this.calcDistance(this.state.x,marker.coordinates)*1000).toFixed(2).toString(10) + "m"}
+
+/*
+                    {
+                        this.state.currentLoc == null ? null : <Marker.Animated ref={marker => {this.marker = marker;}} title={"true location"} coordinate={this.state.currentLoc} description={this.state.currentLoc.longitude.toString() + " " + this.state.currentLoc.latitude.toString()}/>
+                    }
+*/
