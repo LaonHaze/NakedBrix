@@ -38,6 +38,8 @@ export default class TakeSample extends React.Component {
                 </View>
                 <View style={{width: '60%', marginTop: 15}}>
                     <Input inputStyle={{color:'white'}}
+                        labelStyle = {{color:'white'}}
+                        inputContainerStyle = {{borderColor: 'white'}}
                         label='Brix Value'
                         value={this.state.brix}
                         onChangeText={this.handleBrixChange}

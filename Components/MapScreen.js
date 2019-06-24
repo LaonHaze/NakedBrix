@@ -27,7 +27,7 @@ export default class MapScreen extends React.Component {
           markers: []
           ,
           error: null,
-          testView: false
+          testView: true
         };
     }
 
