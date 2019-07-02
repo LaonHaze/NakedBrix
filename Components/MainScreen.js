@@ -1,59 +1,15 @@
 import React from 'react';
-import { StyleSheet, Text, View, StatusBar, TouchableOpacity, Vibration, Image} from 'react-native';
+import { StyleSheet, Text, View, StatusBar, TouchableOpacity, Vibration, Image, AsyncStorage } from 'react-native';
 import MapScreen from './MapScreen';
 import TakeSample from './TakeSample';
 import DistanceTracker from './DistanceTracker';
 import Notification from './Notification';
-
-EXAMPLE_MARKERS = [
-    {
-        id: 0,
-        title: 'M1',
-        coordinates: {
-            latitude: -36.847800,
-            longitude: 174.753490
-        },
-        block: "Home",
-        brix: null
-    },
-    {
-        id: 1,
-        title: 'M2',
-        coordinates: {
-            latitude: -36.846410,
-            longitude: 174.755000
-        },
-        block: "Home",
-        brix: null
-    },
-    {
-        id: 2,
-        title: 'M3',
-        coordinates: {
-            latitude: -36.847110,
-            longitude: 174.753390
-        },
-        block: "Chardonnay",
-        brix: null
-    },
-    {
-        id: 3,
-        title: 'M4',
-        coordinates: {
-            latitude: -36.846555,
-            longitude: 174.754100
-        },
-        block: "Chardonnay",
-        brix: null
-    }
-];
 
 export default class MainScreen extends React.Component {
     constructor(props) {
       super(props);
 
       this.state = {
-        markers: EXAMPLE_MARKERS,
         curDistances: null,
         brixVals: null,
         menuoption: 'map',
@@ -68,11 +24,15 @@ export default class MainScreen extends React.Component {
       }
     }
 
-    componentDidMount() {
-        let brixValues = EXAMPLE_MARKERS.map(a => a.brix);
-        let blockNames = Array.from(new Set(EXAMPLE_MARKERS.map(a => a.block)));
-        this.setState({brixVals: brixValues});
+    async componentDidMount() {
+        this.getStorage().then(data => {
+            this.setState({brixVals: data});
+        });
+
+        let blockNames = Array.from(new Set(this.props.markers.map(a => a.block)));
+        
         this.setState({blocks: blockNames});
+
     }
 
     setProximityMarker = (i, name) => {
@@ -108,7 +68,7 @@ export default class MainScreen extends React.Component {
     dataSubmit = (enterVal) => {
         
         let newBrixVals = this.state.brixVals;
-        let markerNames = this.state.markers.map(a => a.title);
+        let markerNames = this.props.markers.map(a => a.title);
         let valIndex = markerNames.indexOf(enterVal.samplingPoint);
 
         if(valIndex != -1) {
@@ -119,12 +79,32 @@ export default class MainScreen extends React.Component {
             }
 
             newBrixVals[valIndex] = enterVal.brix;
-            this.setState({brixVals: newBrixVals})
+            this.setState({brixVals: newBrixVals}, async () => {
+                this.setStorage();
+            })
             this.setState({menuoption: 'map'});
             //console.log(this.state.brixVals);
         } else {
             console.log('Invalid Sampling Point Name')
         }        
+    }
+
+    getStorage = async () => {
+        try {
+            let item = await AsyncStorage.getItem(this.props.code);
+            //You'd want to error check for failed JSON parsing...
+            if (item != null) {
+                return JSON.parse(item).brixVals;
+            } else {
+                return this.props.markers.map(a => a.brix);
+            }       
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    setStorage = async () => {
+        await AsyncStorage.setItem(this.props.code, JSON.stringify(this.state))
     }
 
     mapNav = () => {
@@ -148,8 +128,8 @@ export default class MainScreen extends React.Component {
     blockNumbers(block) {
         let blockNum = 0;
 
-        for(i = 0 ; i < this.state.markers.length; i++) {
-            if(this.state.markers[i].block == block) {
+        for(i = 0 ; i < this.props.markers.length; i++) {
+            if(this.props.markers[i].block == block) {
                 blockNum += 1;
             }
         }
@@ -160,8 +140,8 @@ export default class MainScreen extends React.Component {
     blockBrixCheck(block) {
         let checkedNum = 0;
 
-        for(i = 0; i < this.state.markers.length; i++) {
-            if(this.state.markers[i].block == block && this.state.brixVals[i] != null) {
+        for(i = 0; i < this.props.markers.length; i++) {
+            if(this.props.markers[i].block == block && this.state.brixVals[i] != null) {
                 checkedNum += 1;
             }
         }
@@ -171,13 +151,12 @@ export default class MainScreen extends React.Component {
   
     render() {
       return (
-        <View style={styles.maincontainer}>
-            <StatusBar hidden />
+        <View style = {styles.maincontainer}>
             <View style = {{flex: 1, backgroundColor:'black', alignItems:'center'}}>
                 {
                     this.state.selectedBlock == null ?
                     <Text style = {{marginTop: 30, color:'white'}}>
-                        All Blocks {this.state.blockCounts}/{this.state.markers.length}
+                        All Blocks {this.state.blockCounts}/{this.props.markers.length}
                     </Text>:
                     <Text style = {{marginTop: 30, color:'white'}}>
                         {this.state.selectedBlock} Block {this.blockBrixCheck(this.state.selectedBlock)}/{this.blockNumbers(this.state.selectedBlock)}
@@ -189,7 +168,7 @@ export default class MainScreen extends React.Component {
                         <MapScreen 
                             setProximityMarker = {this.setProximityMarker} 
                             setDistances = {this.setDistances} 
-                            markerLocations = {this.state.markers} 
+                            markerLocations = {this.props.markers} 
                             selectedM = {this.state.selectedMarker} 
                             setMarkertoNone = {this.setMarkertoNone} 
                             brixVals = {this.state.brixVals}
@@ -201,7 +180,7 @@ export default class MainScreen extends React.Component {
                     {this.state.curDistances != null ? 
                         <DistanceTracker 
                             distances = {this.state.curDistances} 
-                            markers = {this.state.markers} 
+                            markers = {this.props.markers} 
                             brixVals = {this.state.brixVals} 
                             setMarker = {this.setMarker}
                             blocks = {this.state.blocks}

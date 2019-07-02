@@ -27,7 +27,8 @@ export default class MapScreen extends React.Component {
           markers: []
           ,
           error: null,
-          testView: true
+          testView: true,
+          mapReady: false
         };
     }
 
@@ -145,6 +146,10 @@ export default class MapScreen extends React.Component {
         this.checkDistance(e.nativeEvent.coordinate);
     }
 
+    mapReady = () => {
+        this.setState({mapReady: true})
+    }
+
     render() {
         return(
             <View style ={styles.container}>
@@ -156,11 +161,13 @@ export default class MapScreen extends React.Component {
                     showsUserLocation = {!this.state.testView}
                     onUserLocationChange = {(e) => {!this.state.testView? this.testMarkerMove(e) : null}}
                     toolbarEnabled = {false}
+                    onLayout = {this.mapReady}
                 >
                     {
+                        this.state.mapReady ? 
                         this.props.markerLocations.map((marker, index) => (
                                 <Marker 
-                                    key={marker.title}
+                                    key={marker.id}
                                     coordinate={marker.coordinates}
                                 >
                                     {this.props.brixVals[index] == null ?
@@ -168,19 +175,19 @@ export default class MapScreen extends React.Component {
                                             {
                                                 this.props.selectedM == null ? 
                                                     null : 
-                                                    (this.props.selectedM.title == marker.title ? 
+                                                    (this.props.selectedM.id == marker.id ? 
                                                         <Text style ={styles.distanceText}>{this.props.distances[index]}m</Text> 
                                                         : null)
                                             }
                                             <Image source = {require('../assets/baseMarker.png')} style = {{height: 70}} resizeMode = 'contain'/>
-                                            <Text style={styles.markerText}>{marker.title}</Text>   
+                                            <Text style={styles.markerText}>{marker.block.charAt(0)}{marker.title}</Text>   
                                         </View>
                                         :
                                         <View style = {{height: 70, width: 70, left: 8}}>
                                             {
                                                 this.props.selectedM == null ? 
                                                     null : 
-                                                    (this.props.selectedM.title == marker.title ? 
+                                                    (this.props.selectedM.id == marker.id ? 
                                                         <Text numberOfLines={1} style ={{color:'white', backgroundColor: 'black', position: 'absolute', overflow: 'visible'}}>{this.props.distances[index]}m</Text> 
                                                         : null)
                                             }
@@ -188,10 +195,11 @@ export default class MapScreen extends React.Component {
                                         </View>
                                     }
                                 </Marker>
-                        ))
+                        )):
+                        null
                     }
                     {
-                        this.state.testView ? <Marker draggable coordinate={this.state.x} onDragEnd={(e) => this.testMarkerMove(e)} title={'Mock Location'} pinColor='blue'/> : null
+                        this.state.testView && this.state.mapReady ? <Marker draggable coordinate={this.state.x} onDragEnd={(e) => this.testMarkerMove(e)} title={'Mock Location'} pinColor='blue'/> : null
                     }
                     
                     {

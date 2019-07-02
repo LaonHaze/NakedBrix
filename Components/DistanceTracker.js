@@ -148,14 +148,14 @@ export default class DistanceTracker extends React.Component {
                                             key = {marker.title}
                                             color='white'
                                             buttonStyle= {{backgroundColor: 'red'}}
-                                            title = {marker.block + " "  + marker.title}
+                                            title = {"Sampling Location "  + marker.title}
                                             onPress = {() => {this.props.setMarker({marker})}}
                                         /> : 
                                         <Button 
                                             key = {marker.title} 
                                             color='white'
                                             buttonStyle= {{backgroundColor: 'lightgreen'}}
-                                            title = {marker.block + " "  + marker.title} 
+                                            title = {"Sampling Location "  + marker.title} 
                                             onPress = {() => {this.props.setMarker({marker})}}
                                         />}
                                     </View>
