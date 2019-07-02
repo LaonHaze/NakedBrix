@@ -1,2 +1,4 @@
 # NakedBrix
-Real time location tracking application for vineyard sampling process
+Real time location tracking application for vineyard brix sampling process
+
+Built in React Native
