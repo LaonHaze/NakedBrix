@@ -3,6 +3,7 @@ import { StyleSheet, StatusBar, View} from 'react-native';
 import MainScreen from './Components/MainScreen';
 import CodeEnter from './Components/CodeEnter';
 
+//Set state testView of MapScreen Component to false to use real location instead of draggable marker
 export default class App extends React.Component {
   constructor(props) {
     super(props);
@@ -14,6 +15,7 @@ export default class App extends React.Component {
     }
   }
 
+  //handles code submission to fetch markers and prepares components for map rendering
   submitCode = (curCode) => {
     let curMarkers = this.fetchMarkers(curCode);
     this.setState({code: curCode}, () => {
@@ -23,6 +25,7 @@ export default class App extends React.Component {
     })
   }
 
+  //Retrieves markers using code. In the future this will change to an api call
   fetchMarkers = (curCode) => {
     let realMarkers = null;
 

@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Animated} from 'r
 import {Button} from 'react-native-elements';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
+//Component that displays distance to various blocks and sampling points
 export default class DistanceTracker extends React.Component {
     constructor(props) {
         super(props);
@@ -14,7 +15,12 @@ export default class DistanceTracker extends React.Component {
             minHeight: 40,
         }
     }
+        
+    componentDidMount() {
+        this.state.animation.setValue(this.state.minHeight);
+    }
 
+    //Toggles this window to pop up or hide
     toggle() {
          //Step 1
         let initialValue    = this.state.expanded? this.state.maxHeight + this.state.minHeight : this.state.minHeight,
@@ -31,15 +37,14 @@ export default class DistanceTracker extends React.Component {
             ).start();  //Step 5
         });        
     }
-    
-    componentDidMount() {
-        this.state.animation.setValue(this.state.minHeight);
-    }
 
+    //Sets Block selection
     viewSwitch(block) {
         this.props.setBlock(block);
     }
 
+    //Calculates shortest distance for a given block, to be used for displaying distance to block
+    //This operation is very slow and can be written to be done during the distance calculation stage. May implement later
     shortestDistance(block) {
         let shortestDistance = null;
         for(i = 0 ; i < this.props.markers.length; i++) {
@@ -58,6 +63,7 @@ export default class DistanceTracker extends React.Component {
         return shortestDistance
     }
 
+    //Checks if brix value of the whole block has been taken
     blockBrixCheck(block) {
         let blockDone = true;
 

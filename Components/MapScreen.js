@@ -7,25 +7,19 @@ const LATITUDE = -36.853610;
 const LONGITUDE = 174.764900;
 const LATITUDE_DELTA = 0.01;
 const LONGITUDE_DELTA = 0.01;
-
+//Component that renders map, markers, etc
+//Set state testView to false to use real location 
 export default class MapScreen extends React.Component {
     constructor(props) {
         super(props);
     
         this.state = {
-          region: {
-            latitude: -36.843610,
-            latitudeDelta: 0.01,
-            longitude: 174.754490,
-            longitudeDelta: 0.01
-          },
+          region: null,
           currentLoc: new AnimatedRegion(null),
           x: {
             latitude: -36.843610,
             longitude: 174.754490
           },
-          markers: []
-          ,
           error: null,
           testView: true,
           mapReady: false
@@ -33,7 +27,7 @@ export default class MapScreen extends React.Component {
     }
 
     componentDidMount() {
-        this.setState({markers: this.props.markerLocations}, () => {this.updateDistance(this.state.x)});
+        this.updateDistance(this.state.x);
 
         navigator.geolocation.getCurrentPosition(
             position => {
@@ -124,13 +118,12 @@ export default class MapScreen extends React.Component {
     }
 
     updateDistance = (curr) => {
-        let curmarkers = this.state.markers;
-        let distances = curmarkers.map(m => (haversine(m.coordinates, curr)*1000).toFixed(2));
+        let distances = this.props.markerLocations.map(m => (haversine(m.coordinates, curr)*1000).toFixed(2));
         this.props.setDistances(distances);
     }
     
     checkDistance = (curr) => {
-        let curmarkers = this.state.markers;
+        let curmarkers = this.props.markerLocations;
         for(let i = 0; i < curmarkers.length; i++) {
             let distance = haversine(curmarkers[i].coordinates, curr);
             if(distance < 0.01){

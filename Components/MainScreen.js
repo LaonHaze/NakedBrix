@@ -6,6 +6,7 @@ import DistanceTracker from './DistanceTracker';
 import Notification from './Notification';
 
 export default class MainScreen extends React.Component {
+    //there is some consistency issue with state names and prop names not matching... sorry if it gives headaches
     constructor(props) {
       super(props);
 
@@ -24,6 +25,7 @@ export default class MainScreen extends React.Component {
       }
     }
 
+    //Component Mount Event, checks assign brix value array, block names array
     async componentDidMount() {
         this.getStorage().then(data => {
             this.setState({brixVals: data});
@@ -33,8 +35,10 @@ export default class MainScreen extends React.Component {
         
         this.setState({blocks: blockNames});
 
+
     }
 
+    //Sets Proximity Marker when user reaches 10m radius of any markers, this is then passed into the TakeSample Component and automatically assigns the sampling point value
     setProximityMarker = (i, name) => {
         let dupe = false;
 
@@ -45,26 +49,32 @@ export default class MainScreen extends React.Component {
         this.setState({proximitymarker: name},() => {this.openNotification(i, dupe)});
     }
 
+    //Updates Distances array with values calculated
     setDistances = (distances) => {
         this.setState({curDistances: distances});
     }
 
+    //When a sampling point is selected from the distance tracker, sets the selection to that marker
     setMarker = (markerselect) => {
         this.setState({selectedMarker: markerselect.marker});
     }
 
+    //Clears marker selection, currently not bound to any functions i.e. not in use
     setMarkertoNone = () => {
         this.setState({selectedMarker: null});
     }
 
+    //When a sampling block is selected from the distance tracker, sets the selection to that block
     setBlock = (block) => {
         this.setState({selectedBlock: block}, () => {this.setState({distanceView: 'point'})});
     }
 
+    //Clears block selection
     unsetBlock = () => {
         this.setState({distanceView: 'block'}, () => {this.setState({selectedBlock: null})});
     }
 
+    //stores brix value submitted from TakeSample component. Also stores to asyncstorage for persistence
     dataSubmit = (enterVal) => {
         
         let newBrixVals = this.state.brixVals;
@@ -89,6 +99,7 @@ export default class MainScreen extends React.Component {
         }        
     }
 
+    //Method to retrieve the persisted brix data
     getStorage = async () => {
         try {
             let item = await AsyncStorage.getItem(this.props.code);
@@ -103,29 +114,39 @@ export default class MainScreen extends React.Component {
         }
     }
 
+    //Method to set the brix value persistence
     setStorage = async () => {
         await AsyncStorage.setItem(this.props.code, JSON.stringify(this.state))
     }
 
-    mapNav = () => {
-        this.setState({menuoption: 'map'});
+    //Navigation for main navigation on bottom of screen. Settings window has not been implemented yet
+    navigation = (nav) => {
+        switch(nav) {
+            case "map":
+                this.setState({menuoption: 'map'});
+                break;
+            case "record":
+                this.setState({menuoption: 'record'});
+                break;
+            default:
+                this.setState({menuoption: 'map'});
+        }
     }
 
-    enterNav = () => {
-        this.setState({menuoption: 'record'});
-    }
-
+    //Opens notification window when sampling point reached
     openNotification = (i, dupe) => {
         if(this.state.brixVals[i] == null && !dupe) {
             this.setState({notification: true});
         }
     }
 
+    //Closes notification window
     closeNotification = () => {
         this.setState({notification: false});
     }
 
-    blockNumbers(block) {
+    //Checks how many sampling points are in a block
+    blockNumbers = (block) => {
         let blockNum = 0;
 
         for(i = 0 ; i < this.props.markers.length; i++) {
@@ -137,7 +158,8 @@ export default class MainScreen extends React.Component {
         return blockNum;
     }
 
-    blockBrixCheck(block) {
+    //Checks how many sampling points in a block has been checked
+    blockBrixCheck = (block) => {
         let checkedNum = 0;
 
         for(i = 0; i < this.props.markers.length; i++) {
@@ -214,14 +236,14 @@ export default class MainScreen extends React.Component {
                         style = {{height: '80%'}}
                     />
                 </TouchableOpacity>
-                <TouchableOpacity style ={styles.menuButtons} onPress = {this.mapNav}>
+                <TouchableOpacity style ={styles.menuButtons} onPress = {() => {this.navigation("map")}}>
                     <Image 
                         source = {require('../assets/viewmap.png')}
                         resizeMode = 'contain'
                         style = {{height: '80%'}}
                     />
                 </TouchableOpacity>
-                <TouchableOpacity style ={styles.menuButtons} onPress = {this.enterNav}>
+                <TouchableOpacity style ={styles.menuButtons} onPress = {() => {this.navigation("record")}}>
                     <Image 
                         source = {require('../assets/record.png')}
                         resizeMode = 'contain'
@@ -233,7 +255,8 @@ export default class MainScreen extends React.Component {
       );
     }
   }
-/**/
+
+/*Styles*/
 const styles = StyleSheet.create({
     maincontainer: {
         flex: 1,

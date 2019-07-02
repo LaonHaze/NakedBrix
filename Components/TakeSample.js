@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, KeyboardAvoidingView} from 'react-native';
 import {Input, Button} from 'react-native-elements';
 
+//Simple form component to take sample brix value
 export default class TakeSample extends React.Component {
     constructor(props) {
         super(props);

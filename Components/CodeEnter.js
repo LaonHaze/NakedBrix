@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, View, KeyboardAvoidingView} from 'react-native';
 import {Input, Button} from 'react-native-elements';
 
+//Simple form to enter the code at the app start to retrieve marker values
 export default class CodeEnter extends React.Component {
     constructor(props) {
         super(props);
